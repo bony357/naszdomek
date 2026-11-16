@@ -5,7 +5,6 @@ import { byPlan } from '../lib/filters';
 import { useStore } from '../lib/store';
 import type { Zalacznik } from '../lib/types';
 import { taskProgress } from '../views/TasksView';
-import { DepItem } from './DepItem';
 import { Sheet, type SheetStackProps } from './Sheet';
 import { SubtaskRow } from './SubtaskRow';
 
@@ -19,7 +18,7 @@ interface Props extends SheetStackProps {
 
 export function TaskSheet({ id, stacked, hidden, onClose, onOpenSub, onAddSub, onCreated }: Props) {
   const store = useStore();
-  const { zadanieById, podzadania, zalaczniki, plan, parentsOf, childrenOf, podById } = store;
+  const { zadanieById, podzadania, zalaczniki, plan } = store;
   const z = id !== null ? zadanieById.get(id) : undefined;
   const [form, setForm] = useState({ nazwa: z?.nazwa ?? '', pokoj: z?.pokoj ?? POKOJE[0], notatka: z?.notatka ?? '' });
   const [showDone, setShowDone] = useState(false);
@@ -44,18 +43,6 @@ export function TaskSheet({ id, stacked, hidden, onClose, onOpenSub, onAddSub, o
   const files = id !== null ? zalaczniki.filter((a) => a.zadanie_id === id) : [];
   const progress = taskProgress(subs);
 
-  // Zależności z innymi zadaniami (tylko niezrobione), w obie strony
-  const own = new Set(subs.map((p) => p.id));
-  const external = (map: Map<number, number[]>) => [
-    ...new Set(
-      subs
-        .filter((p) => p.status !== 'zrobione')
-        .flatMap((p) => map.get(p.id) ?? [])
-        .filter((x) => !own.has(x) && podById.get(x)?.status !== 'zrobione'),
-    ),
-  ];
-  const waitsFor = external(parentsOf);
-  const blocks = external(childrenOf);
 
   const dirty = !z || form.nazwa !== z.nazwa || form.pokoj !== z.pokoj || form.notatka !== (z.notatka ?? '');
 
@@ -139,30 +126,6 @@ export function TaskSheet({ id, stacked, hidden, onClose, onOpenSub, onAddSub, o
               <input type="checkbox" checked={showDone} onChange={(e) => setShowDone(e.target.checked)} /> zrobione
             </label>
           </div>
-          {(waitsFor.length > 0 || blocks.length > 0) && (
-            <div className="deps-summary">
-              {waitsFor.length > 0 && (
-                <div className="field">
-                  <span>Czeka na (inne zadania)</span>
-                  <div className="dep-list">
-                    {waitsFor.map((d) => (
-                      <DepItem key={d} id={d} onOpen={onOpenSub} />
-                    ))}
-                  </div>
-                </div>
-              )}
-              {blocks.length > 0 && (
-                <div className="field">
-                  <span>Blokuje (inne zadania)</span>
-                  <div className="dep-list">
-                    {blocks.map((d) => (
-                      <DepItem key={d} id={d} onOpen={onOpenSub} />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
           <div className="list">
             {visibleSubs.map((p) => (
               <SubtaskRow key={p.id} pod={p} context="none" showDeps onOpen={onOpenSub} />
