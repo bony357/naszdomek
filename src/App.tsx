@@ -20,9 +20,12 @@ const TABS: { id: Tab; label: string; icon: typeof Sun }[] = [
   { id: 'zadania', label: 'Zadania', icon: Star },
 ];
 
-type Modal =
+type Modal = { key: number } & (
   | { kind: 'sub'; id: number | null; zadanieId?: number }
-  | { kind: 'task'; id: number | null };
+  | { kind: 'task'; id: number | null }
+);
+type ModalInput = Modal extends infer M ? (M extends Modal ? Omit<M, 'key'> : never) : never;
+let modalKey = 0;
 
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
@@ -79,10 +82,15 @@ function Shell() {
     window.scrollTo(0, 0);
   }, [tab]);
 
-  const push = useCallback((m: Modal) => setStack((s) => [...s, m]), []);
+  // Z listy: panel zaczyna od nowa (bez "długiego powrotu").
+  // Z wnętrza panelu: kolejny poziom, strzałka wraca do poprzedniego.
+  const open = useCallback((m: ModalInput) => setStack([{ ...m, key: ++modalKey } as Modal]), []);
+  const push = useCallback((m: ModalInput) => setStack((s) => [...s, { ...m, key: ++modalKey } as Modal]), []);
   const pop = useCallback(() => setStack((s) => s.slice(0, -1)), []);
-  const openSub = useCallback((id: number) => push({ kind: 'sub', id }), [push]);
-  const openTask = useCallback((id: number) => push({ kind: 'task', id }), [push]);
+  const openSub = useCallback((id: number) => open({ kind: 'sub', id }), [open]);
+  const openTask = useCallback((id: number) => open({ kind: 'task', id }), [open]);
+  const pushSub = useCallback((id: number) => push({ kind: 'sub', id }), [push]);
+  const pushTask = useCallback((id: number) => push({ kind: 'task', id }), [push]);
 
   if (loading) return <div className="splash">🏠</div>;
 
@@ -129,7 +137,7 @@ function Shell() {
       <button
         className="fab"
         aria-label={tab === 'zadania' ? 'Nowe zadanie' : 'Nowe podzadanie'}
-        onClick={() => push(tab === 'zadania' ? { kind: 'task', id: null } : { kind: 'sub', id: null })}
+        onClick={() => open(tab === 'zadania' ? { kind: 'task', id: null } : { kind: 'sub', id: null })}
       >
         <Plus size={26} />
       </button>
@@ -146,25 +154,25 @@ function Shell() {
       {stack.map((m, i) =>
         m.kind === 'sub' ? (
           <SubtaskForm
-            key={i}
+            key={m.key}
             id={m.id}
             zadanieId={m.zadanieId}
             stacked={i > 0}
             hidden={i < stack.length - 1}
             onClose={pop}
-            onOpenSub={openSub}
-            onOpenTask={openTask}
+            onOpenSub={pushSub}
+            onOpenTask={pushTask}
           />
         ) : (
           <TaskSheet
-            key={`${i}-${m.id}`}
+            key={m.key}
             id={m.id}
             stacked={i > 0}
             hidden={i < stack.length - 1}
             onClose={pop}
-            onOpenSub={openSub}
+            onOpenSub={pushSub}
             onAddSub={(zadanieId) => push({ kind: 'sub', id: null, zadanieId })}
-            onCreated={(id) => setStack((s) => [...s.slice(0, -1), { kind: 'task', id }])}
+            onCreated={(id) => setStack((s) => [...s.slice(0, -1), { kind: 'task', id, key: ++modalKey }])}
           />
         ),
       )}
