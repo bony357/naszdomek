@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+.env.local
+# Dane i dokumentacja z AppSheet — nie trafiają do repozytorium
+*.csv
+*.pdf
+kod.gs
+supabase/seed.sql
+supabase/.temp
+*.tsbuildinfo
