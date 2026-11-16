@@ -131,7 +131,7 @@ function Shell() {
         {tab === 'dzis' && <TodayView filters={filters} onOpen={openSub} />}
         {tab === 'kalendarz' && <CalendarView filters={filters} onOpen={openSub} />}
         {tab === 'lista' && <ListView filters={filters} onOpen={openSub} onOpenTask={openTask} />}
-        {tab === 'zadania' && <TasksView filters={filters} onOpenTask={openTask} />}
+        {tab === 'zadania' && <TasksView filters={filters} onFilters={setFilters} onOpen={openSub} onOpenTask={openTask} />}
       </main>
 
       <button

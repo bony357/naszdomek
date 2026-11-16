@@ -13,6 +13,7 @@ export interface Filters {
   calGroup: SubGroup;
   calShowDone: boolean;
   tasksShowDone: boolean;
+  tasksShowSubs: boolean;
 }
 
 export const EMPTY_FILTERS: Filters = {
@@ -24,6 +25,7 @@ export const EMPTY_FILTERS: Filters = {
   calGroup: 'pokoj',
   calShowDone: false,
   tasksShowDone: false,
+  tasksShowSubs: false,
 };
 
 const norm = (s: string) => s.toLocaleLowerCase('pl').normalize('NFD').replace(/\p{Diacritic}/gu, '');

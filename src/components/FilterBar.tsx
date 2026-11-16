@@ -44,6 +44,7 @@ function activeFilters(tab: Tab, f: Filters): Active[] {
       out.push({ label: `Grupuj: ${CAL_GROUP.find((g) => g.value === f.calGroup)!.label.toLowerCase()}`, clear: { calGroup: EMPTY_FILTERS.calGroup } });
     if (f.calShowDone) out.push({ label: 'Ze zrobionymi', clear: { calShowDone: false } });
   }
+  if (tab === 'zadania' && f.tasksShowSubs) out.push({ label: 'Z podzadaniami', clear: { tasksShowSubs: false } });
   if (tab === 'zadania' && f.tasksShowDone) out.push({ label: 'Z zakończonymi', clear: { tasksShowDone: false } });
   return out;
 }
@@ -151,6 +152,17 @@ export function FilterBar({ tab, filters, onChange }: Props) {
                 onChange={(calShowDone) => set({ calShowDone })}
               />
             </>
+          )}
+          {tab === 'zadania' && (
+            <Options
+              label="Podzadania"
+              value={filters.tasksShowSubs}
+              options={[
+                { value: false, label: 'Ukryj' },
+                { value: true, label: 'Pokaż' },
+              ]}
+              onChange={(tasksShowSubs) => set({ tasksShowSubs })}
+            />
           )}
           {tab === 'zadania' && (
             <Options
