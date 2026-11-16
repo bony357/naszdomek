@@ -1,12 +1,30 @@
 import type { PlanEntry, Podzadanie, Zadanie } from './types';
 
+export type ListShow = 'otwarte' | 'zablokowane' | 'pomysly' | 'zrobione' | 'wszystkie';
+export type SubGroup = 'pokoj' | 'osoba' | 'zadanie' | 'brak';
+
+/** Filtry wspólne dla widoków + opcje poszczególnych widoków */
 export interface Filters {
   kto: string | null;
   rodzaj: string | null;
   q: string;
+  listShow: ListShow;
+  listGroup: 'pokoj' | 'osoba';
+  calGroup: SubGroup;
+  calShowDone: boolean;
+  tasksShowDone: boolean;
 }
 
-export const EMPTY_FILTERS: Filters = { kto: null, rodzaj: null, q: '' };
+export const EMPTY_FILTERS: Filters = {
+  kto: null,
+  rodzaj: null,
+  q: '',
+  listShow: 'otwarte',
+  listGroup: 'pokoj',
+  calGroup: 'pokoj',
+  calShowDone: false,
+  tasksShowDone: false,
+};
 
 const norm = (s: string) => s.toLocaleLowerCase('pl').normalize('NFD').replace(/\p{Diacritic}/gu, '');
 

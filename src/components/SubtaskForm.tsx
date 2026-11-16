@@ -6,9 +6,10 @@ import { groupBy } from '../lib/filters';
 import { computeSchedule, descendants } from '../lib/schedule';
 import { useStore } from '../lib/store';
 import type { Podzadanie, Status } from '../lib/types';
-import { Sheet } from './Sheet';
+import { DepItem } from './DepItem';
+import { Sheet, type SheetStackProps } from './Sheet';
 
-interface Props {
+interface Props extends SheetStackProps {
   id: number | null;
   zadanieId?: number;
   onClose: () => void;
@@ -18,7 +19,7 @@ interface Props {
 
 const NEW_TASK = -1;
 
-export function SubtaskForm({ id, zadanieId, onClose, onOpenSub, onOpenTask }: Props) {
+export function SubtaskForm({ id, stacked, hidden, zadanieId, onClose, onOpenSub, onOpenTask }: Props) {
   const store = useStore();
   const { podById, zadanieById, zadania, podzadania, zaleznosci, parentsOf, childrenOf, today } = store;
   const existing = id !== null ? podById.get(id) : undefined;
@@ -126,6 +127,8 @@ export function SubtaskForm({ id, zadanieId, onClose, onOpenSub, onOpenTask }: P
 
   return (
     <Sheet
+      stacked={stacked}
+      hidden={hidden}
       title={id === null ? 'Nowe podzadanie' : 'Podzadanie'}
       onClose={onClose}
       actions={
@@ -259,24 +262,20 @@ export function SubtaskForm({ id, zadanieId, onClose, onOpenSub, onOpenTask }: P
       </div>
 
       <div className="field">
-        <span>Zablokowane przez</span>
-        <div className="dep-list">
-          {deps.map((d) => (
-            <div key={d} className={`dep ${podById.get(d)?.status === 'zrobione' ? 'done' : ''}`}>
-              <button className="dep-label" onClick={() => onOpenSub(d)}>
-                {label(d)}
-              </button>
-              <button className="icon-btn small" onClick={() => setDeps(deps.filter((x) => x !== d))} aria-label="Usuń zależność">
-                <X size={14} />
-              </button>
-            </div>
-          ))}
-          {!picking && (
-            <button className="btn ghost small" onClick={() => setPicking(true)}>
-              <Plus size={14} /> Dodaj zależność
-            </button>
-          )}
-        </div>
+        <span>Czeka na</span>
+        {deps.length > 0 && (
+          <div className="dep-list">
+            {deps.map((d) => (
+              <DepItem key={d} id={d} onOpen={onOpenSub} onRemove={() => setDeps(deps.filter((x) => x !== d))} />
+            ))}
+          </div>
+        )}
+        {deps.length === 0 && !picking && <span className="muted small-text">Nic — można zaczynać od razu</span>}
+        {!picking && (
+          <button className="btn ghost small align-start" onClick={() => setPicking(true)}>
+            <Plus size={14} /> Dodaj zależność
+          </button>
+        )}
         {picking && (
           <div className="picker">
             <input autoFocus placeholder="Szukaj podzadania…" value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -308,11 +307,7 @@ export function SubtaskForm({ id, zadanieId, onClose, onOpenSub, onOpenTask }: P
           <span>Blokuje</span>
           <div className="dep-list">
             {children.map((c) => (
-              <div key={c} className={`dep ${podById.get(c)?.status === 'zrobione' ? 'done' : ''}`}>
-                <button className="dep-label" onClick={() => onOpenSub(c)}>
-                  {label(c)}
-                </button>
-              </div>
+              <DepItem key={c} id={c} onOpen={onOpenSub} />
             ))}
           </div>
         </div>

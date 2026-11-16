@@ -1,7 +1,7 @@
 import type { Session } from '@supabase/supabase-js';
 import { CalendarDays, ListTree, LogOut, Plus, RefreshCw, Star, Sun } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import { FilterBar } from './components/FilterBar';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { FilterBar, type Tab } from './components/FilterBar';
 import { SubtaskForm } from './components/SubtaskForm';
 import { TaskSheet } from './components/TaskSheet';
 import { EMPTY_FILTERS, type Filters } from './lib/filters';
@@ -13,7 +13,6 @@ import { Login } from './views/Login';
 import { TasksView } from './views/TasksView';
 import { TodayView } from './views/TodayView';
 
-type Tab = 'dzis' | 'kalendarz' | 'lista' | 'zadania';
 const TABS: { id: Tab; label: string; icon: typeof Sun }[] = [
   { id: 'dzis', label: 'Dziś', icon: Sun },
   { id: 'kalendarz', label: 'Kalendarz', icon: CalendarDays },
@@ -64,6 +63,16 @@ function Shell() {
   const [tab, setTab] = useState<Tab>(initialTab);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [stack, setStack] = useState<Modal[]>([]);
+  const topRef = useRef<HTMLDivElement>(null);
+
+  // Wysokość przypiętego nagłówka -> offset dla przyklejonych nagłówków grup
+  useEffect(() => {
+    const el = topRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => document.documentElement.style.setProperty('--top-h', `${el.offsetHeight}px`));
+    ro.observe(el);
+    return () => ro.disconnect();
+  });
 
   useEffect(() => {
     history.replaceState(null, '', `#${tab}`);
@@ -96,7 +105,8 @@ function Shell() {
   }
 
   return (
-    <div className="app">
+    <div className={`app ${stack.length ? 'has-panel' : ''}`}>
+      <div className="top" ref={topRef}>
       <header className="topbar">
         <h1>{tab === 'dzis' ? 'Nasz domek' : TABS.find((t) => t.id === tab)!.label}</h1>
         <button className="icon-btn" onClick={() => refresh()} aria-label="Odśwież">
@@ -106,7 +116,8 @@ function Shell() {
           <LogOut size={18} />
         </button>
       </header>
-      <FilterBar filters={filters} onChange={setFilters} />
+      <FilterBar tab={tab} filters={filters} onChange={setFilters} />
+      </div>
 
       <main>
         {tab === 'dzis' && <TodayView filters={filters} onOpen={openSub} />}
@@ -138,6 +149,8 @@ function Shell() {
             key={i}
             id={m.id}
             zadanieId={m.zadanieId}
+            stacked={i > 0}
+            hidden={i < stack.length - 1}
             onClose={pop}
             onOpenSub={openSub}
             onOpenTask={openTask}
@@ -146,6 +159,8 @@ function Shell() {
           <TaskSheet
             key={`${i}-${m.id}`}
             id={m.id}
+            stacked={i > 0}
+            hidden={i < stack.length - 1}
             onClose={pop}
             onOpenSub={openSub}
             onAddSub={(zadanieId) => push({ kind: 'sub', id: null, zadanieId })}

@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { Empty, Group } from '../components/Group';
 import { SubtaskRow } from '../components/SubtaskRow';
 import { compareRooms } from '../lib/constants';
-import { byPlan, groupBy, matches, type Filters } from '../lib/filters';
+import { byPlan, groupBy, matches, type Filters, type ListShow } from '../lib/filters';
 import { useStore } from '../lib/store';
 import type { PlanState } from '../lib/types';
 
@@ -12,23 +12,19 @@ interface Props {
   onOpenTask: (id: number) => void;
 }
 
-type Show = 'otwarte' | 'pomysly' | 'zablokowane' | 'zrobione' | 'wszystkie';
-type GroupMode = 'pokoj' | 'osoba';
-
-const SHOW: { value: Show; label: string; states: PlanState[] }[] = [
-  { value: 'otwarte', label: 'Otwarte', states: ['planned', 'blocked', 'idea'] },
-  { value: 'zablokowane', label: '🔒 Zablokowane', states: ['blocked'] },
-  { value: 'pomysly', label: '❓ Pomysły', states: ['idea'] },
-  { value: 'zrobione', label: '✅ Zrobione', states: ['done'] },
-  { value: 'wszystkie', label: 'Wszystkie', states: ['planned', 'blocked', 'idea', 'done'] },
-];
+const STATES: Record<ListShow, PlanState[]> = {
+  otwarte: ['planned', 'blocked', 'idea'],
+  zablokowane: ['blocked'],
+  pomysly: ['idea'],
+  zrobione: ['done'],
+  wszystkie: ['planned', 'blocked', 'idea', 'done'],
+};
 
 /** Połączone widoki "Podzadania" i "Pokoje" z AppSheet: grupowanie Pokój → Zadanie lub po osobie */
 export function ListView({ filters, onOpen, onOpenTask }: Props) {
   const { podzadania, plan, zadanieById } = useStore();
-  const [show, setShow] = useState<Show>('otwarte');
-  const [mode, setMode] = useState<GroupMode>('pokoj');
-  const states = SHOW.find((s) => s.value === show)!.states;
+  const states = STATES[filters.listShow];
+  const mode = filters.listGroup;
 
   const items = podzadania
     .filter((p) => states.includes(plan.get(p.id)!.state))
@@ -37,24 +33,6 @@ export function ListView({ filters, onOpen, onOpenTask }: Props) {
 
   return (
     <div className="view">
-      <div className="view-toolbar">
-        <div className="segmented small">
-          {SHOW.map((s) => (
-            <button key={s.value} className={show === s.value ? 'active' : ''} onClick={() => setShow(s.value)}>
-              {s.label}
-            </button>
-          ))}
-        </div>
-        <div className="segmented small">
-          <button className={mode === 'pokoj' ? 'active' : ''} onClick={() => setMode('pokoj')}>
-            Pokoje
-          </button>
-          <button className={mode === 'osoba' ? 'active' : ''} onClick={() => setMode('osoba')}>
-            Osoby
-          </button>
-        </div>
-      </div>
-
       {items.length === 0 && <Empty>Brak podzadań</Empty>}
 
       {mode === 'pokoj' &&
@@ -69,15 +47,9 @@ export function ListView({ filters, onOpen, onOpenTask }: Props) {
                   title={zadanieById.get(Number(zid))?.nazwa}
                   count={subs.length}
                   right={
-                    <span
-                      className="link"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onOpenTask(Number(zid));
-                      }}
-                    >
-                      szczegóły
-                    </span>
+                    <button className="icon-btn small subtle" onClick={() => onOpenTask(Number(zid))} aria-label="Szczegóły zadania" title="Szczegóły zadania">
+                      <ChevronRight size={16} />
+                    </button>
                   }
                 >
                   {subs.map((p) => (
