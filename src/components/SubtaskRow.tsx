@@ -39,7 +39,7 @@ export function SubtaskRow({ pod, context = 'full', showDeps = false, onOpen }: 
   const ideaBlockers = !showDeps && entry.state === 'blocked' ? entry.blockedBy.map(depName) : [];
 
   return (
-    <div className={`row state-${entry.state} status-${pod.status}`}>
+    <div className={`row state-${entry.state} status-${pod.status} ${waitsFor.length || blocks.length ? 'has-deps' : ''}`}>
       <button
         className="check"
         aria-label={done ? 'Oznacz jako niezrobione' : 'Oznacz jako zrobione'}
@@ -48,26 +48,34 @@ export function SubtaskRow({ pod, context = 'full', showDeps = false, onOpen }: 
         {done ? <Check size={16} strokeWidth={3} /> : pod.status === 'w_trakcie' ? <span className="half" /> : null}
       </button>
       <button className="row-main" onClick={() => onOpen(pod.id)}>
-        <span className="row-title" style={color && !done ? { color } : undefined}>
-          {pod.nazwa}
-        </span>
+        <span className="row-title">{pod.nazwa}</span>
         {sub && <span className="row-sub">{sub}</span>}
         {ideaBlockers.length > 0 && (
           <span className="row-dep">
             <Lock size={12} /> czeka na: {ideaBlockers.join(', ')}
           </span>
         )}
-        {waitsFor.length > 0 && (
-          <span className="row-dep">
-            <Lock size={12} /> czeka na: {waitsFor.map(depName).join(', ')}
-          </span>
-        )}
-        {blocks.length > 0 && (
-          <span className="row-dep">
-            <ArrowRight size={12} /> blokuje: {blocks.map(depName).join(', ')}
-          </span>
-        )}
       </button>
+      {(waitsFor.length > 0 || blocks.length > 0) && (
+        <div className="row-deps">
+          {waitsFor.length > 0 && (
+            <span className="row-dep">
+              <Lock size={12} />
+              <span>
+                czeka na: <DepLinks ids={waitsFor} name={depName} onOpen={onOpen} />
+              </span>
+            </span>
+          )}
+          {blocks.length > 0 && (
+            <span className="row-dep">
+              <ArrowRight size={12} />
+              <span>
+                blokuje: <DepLinks ids={blocks} name={depName} onOpen={onOpen} />
+              </span>
+            </span>
+          )}
+        </div>
+      )}
       <div className="row-meta">
         {when && <span className="when">{when}</span>}
         <span className="row-icons">
@@ -80,5 +88,20 @@ export function SubtaskRow({ pod, context = 'full', showDeps = false, onOpen }: 
         </span>
       </div>
     </div>
+  );
+}
+
+function DepLinks({ ids, name, onOpen }: { ids: number[]; name: (id: number) => string; onOpen: (id: number) => void }) {
+  return (
+    <>
+      {ids.map((id, i) => (
+        <span key={id}>
+          {i > 0 && ', '}
+          <button className="dep-link" onClick={() => onOpen(id)}>
+            {name(id)}
+          </button>
+        </span>
+      ))}
+    </>
   );
 }
