@@ -22,7 +22,7 @@ export function TaskSheet({ id, stacked, hidden, onClose, onOpenSub, onAddSub, o
   const { zadanieById, podzadania, zalaczniki, plan, parentsOf, childrenOf, podById } = store;
   const z = id !== null ? zadanieById.get(id) : undefined;
   const [form, setForm] = useState({ nazwa: z?.nazwa ?? '', pokoj: z?.pokoj ?? POKOJE[0], notatka: z?.notatka ?? '' });
-  const [showDone, setShowDone] = useState(true);
+  const [showDone, setShowDone] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
