@@ -29,6 +29,7 @@ interface Store extends Data {
   showToast: (msg: string) => void;
   refresh: () => Promise<void>;
   setStatus: (id: number, status: Status) => Promise<void>;
+  setKto: (id: number, kto: string | null) => Promise<void>;
   savePodzadanie: (id: number | null, input: PodzadanieInput, deps: number[]) => Promise<number | null>;
   deletePodzadanie: (id: number) => Promise<void>;
   saveZadanie: (id: number | null, input: ZadanieInput) => Promise<number | null>;
@@ -133,6 +134,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }));
       const { error } = await supabase.from('podzadania').update({ status }).eq('id', id);
       if (error) fail(`Nie udało się zmienić statusu: ${error.message}`);
+    },
+    [fail],
+  );
+
+  const setKto = useCallback(
+    async (id: number, kto: string | null) => {
+      setData((d) => ({ ...d, podzadania: d.podzadania.map((p) => (p.id === id ? { ...p, kto } : p)) }));
+      const { error } = await supabase.from('podzadania').update({ kto }).eq('id', id);
+      if (error) fail(`Nie udało się przypisać osoby: ${error.message}`);
     },
     [fail],
   );
@@ -282,6 +292,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     showToast,
     refresh,
     setStatus,
+    setKto,
     savePodzadanie,
     deletePodzadanie,
     saveZadanie,

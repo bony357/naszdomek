@@ -1,5 +1,5 @@
 import { ArrowRight, Check, Lock } from 'lucide-react';
-import { osobaColor, rodzajIcon } from '../lib/constants';
+import { OSOBY, osobaColor, rodzajIcon } from '../lib/constants';
 import { dayLabel } from '../lib/dates';
 import { useStore } from '../lib/store';
 import type { Podzadanie } from '../lib/types';
@@ -14,7 +14,7 @@ interface Props {
 }
 
 export function SubtaskRow({ pod, context = 'full', showDeps = false, onOpen }: Props) {
-  const { plan, zadanieById, podById, parentsOf, childrenOf, today, setStatus } = useStore();
+  const { plan, zadanieById, podById, parentsOf, childrenOf, today, setStatus, setKto } = useStore();
   const entry = plan.get(pod.id)!;
   const z = zadanieById.get(pod.zadanie_id);
   const done = entry.state === 'done';
@@ -79,11 +79,16 @@ export function SubtaskRow({ pod, context = 'full', showDeps = false, onOpen }: 
       <div className="row-meta">
         {when && <span className="when">{when}</span>}
         <span className="row-icons">
-          {pod.kto && (
-            <span className="avatar" style={{ background: color ?? '#888' }} title={pod.kto}>
-              {pod.kto[0]}
+          <button
+            className={`avatar-btn ${pod.kto ? '' : 'unassigned'}`}
+            onClick={() => setKto(pod.id, nextPerson(pod.kto))}
+            title={`${pod.kto ?? 'Nieprzypisane'} — kliknij, aby zmienić`}
+            aria-label={`Osoba: ${pod.kto ?? 'nieprzypisane'}. Zmień`}
+          >
+            <span className="avatar" style={pod.kto ? { background: color ?? '#888' } : undefined}>
+              {pod.kto?.[0] ?? ''}
             </span>
-          )}
+          </button>
           {rodzajIcon(pod.rodzaj)}
         </span>
       </div>
@@ -104,4 +109,11 @@ function DepLinks({ ids, name, onOpen }: { ids: number[]; name: (id: number) => 
       ))}
     </>
   );
+}
+
+/** nikt → Bartek → Kasia → nikt (nieznane imię → nikt) */
+function nextPerson(current: string | null): string | null {
+  if (!current) return OSOBY[0].name;
+  const i = OSOBY.findIndex((o) => o.name === current);
+  return i === -1 || i === OSOBY.length - 1 ? null : OSOBY[i + 1].name;
 }

@@ -271,7 +271,7 @@ input[type='checkbox'] { width: auto; }
 /* ---------- Wiersz z zależnościami: pod nazwą (wąsko) lub w kolumnie obok (szeroko) ---------- */
 .sheet-body { container-type: inline-size; container-name: panel; }
 .row.has-deps {
-  display: grid; grid-template-columns: 24px minmax(0, 1fr) auto;
+  display: grid; grid-template-columns: 24px minmax(0, 1fr) max-content;
   grid-template-areas: 'check main meta' '. deps deps'; column-gap: 10px; row-gap: 3px;
 }
 .row.has-deps > .check { grid-area: check; }
@@ -290,3 +290,11 @@ input[type='checkbox'] { width: auto; }
 
 .hint-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 6px 6px 14px; margin-bottom: 12px; border: 1px dashed var(--border); border-radius: 10px; font-size: 14px; color: var(--muted); }
 input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
+
+/* szybkie przypisanie osoby */
+.avatar-btn { display: grid; place-items: center; width: 28px; height: 28px; margin: -5px -5px -5px 0; border-radius: 50%; }
+.avatar-btn:hover { background: var(--surface-2); }
+.avatar-btn.unassigned .avatar { background: transparent; border: 1.5px dashed var(--border); }
+.avatar-btn.unassigned:hover .avatar { border-color: var(--muted); }
+.state-done .avatar-btn.unassigned { visibility: hidden; }
+.row-icons { flex-wrap: nowrap; white-space: nowrap; }
